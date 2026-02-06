@@ -229,6 +229,17 @@ select{
   color: var(--text);
   outline: none;
 }
+input[type="text"]{
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(10,14,26,0.5);
+  color: var(--text);
+  outline: none;
+}
+input[type="text"]::placeholder{
+  color: rgba(255,255,255,0.45);
+}
 
 .checkbox{
   flex-direction: row;

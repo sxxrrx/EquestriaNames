@@ -343,3 +343,14 @@ input[type="text"]::placeholder{
   font-size: 12px;
   text-align:center;
 }
+.hero-card.activated{
+  outline: 1px solid rgba(243,211,122,0.25);
+  box-shadow: 0 0 0 2px rgba(243,211,122,0.10), 0 22px 70px rgba(0,0,0,0.35);
+  animation: sealPulse 650ms ease-out;
+}
+
+@keyframes sealPulse{
+  0% { transform: translateY(0); filter: brightness(1); }
+  35% { transform: translateY(-1px); filter: brightness(1.07); }
+  100% { transform: translateY(0); filter: brightness(1); }
+}

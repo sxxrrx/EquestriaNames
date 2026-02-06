@@ -1,5 +1,21 @@
 // EquestriaNames.com — expandable generator
+const beginBtn = document.querySelector("#beginBtn");
+const heroCard = document.querySelector(".hero-card");
 
+if (beginBtn && heroCard) {
+  beginBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    // Tiny ceremonial "seal" moment
+    heroCard.classList.add("activated");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Then proceed to ceremony page
+    setTimeout(() => {
+      window.location.href = beginBtn.getAttribute("href");
+    }, 650);
+  });
+}
 const $ = (sel) => document.querySelector(sel);
 
 const tribeSelect = $("#tribeSelect");

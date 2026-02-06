@@ -121,68 +121,209 @@ function vibeProfile(vibeText){
 }
 
 /* ---------- PALETTE ENGINE ---------- */
+function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
-const NAMED_COLORS = {
-  black:  { name:"Midnight Ink", hex:"#0B0E17" },
-  purple: { name:"Amethyst Veil", hex:"#6B46C1" },
-  violet: { name:"Violet Signal", hex:"#7C3AED" },
-  crimson:{ name:"Crimson Note", hex:"#B91C1C" },
-  neon:   { name:"Neon Spark", hex:"#22D3EE" },
-  indigo: { name:"Indigo Velvet", hex:"#312E81" },
-  silver: { name:"Silver Lining", hex:"#C7D2FE" },
-  pearl:  { name:"Pearl Mist", hex:"#F1F5F9" },
-  lavender:{name:"Lavender Bloom", hex:"#C4B5FD" },
-  pink:   { name:"Rose Glow", hex:"#FB7185" },
-  ice:    { name:"Icy Blue", hex:"#BFE3FF" },
-  blue:   { name:"Canterlot Blue", hex:"#60A5FA" },
-  aqua:   { name:"Seafoam Aqua", hex:"#2DD4BF" },
-  gold:   { name:"Royal Gold", hex:"#F3D37A" },
-  peach:  { name:"Peach Nectar", hex:"#FDBA74" },
-  green:  { name:"Verdant Grove", hex:"#34D399" },
-  moss:   { name:"Moss Shade", hex:"#15803D" },
-  brown:  { name:"Chestnut Hearth", hex:"#A16207" }
-};
+function hexToRgb(hex){
+  if (!hex) return null;
+  let h = hex.trim().toLowerCase();
+  if (!h.startsWith("#")) return null;
+  h = h.slice(1);
+  if (h.length === 3) h = h.split("").map(c => c + c).join("");
+  if (h.length !== 6) return null;
+  const n = parseInt(h, 16);
+  if (Number.isNaN(n)) return null;
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
 
-function parseColorWords(freeText){
-  const t = tokens(freeText);
-  const found = [];
-  for (const w of t){
-    if (NAMED_COLORS[w]) found.push(w);
-    // common synonyms
-    if (w === "grey") found.push("silver");
-    if (w === "gray") found.push("silver");
-    if (w === "orange") found.push("peach");
+function rgbToHex({r,g,b}){
+  const to = (v) => v.toString(16).padStart(2, "0");
+  return `#${to(clamp(Math.round(r),0,255))}${to(clamp(Math.round(g),0,255))}${to(clamp(Math.round(b),0,255))}`.toUpperCase();
+}
+
+function rgbToHsl({r,g,b}){
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  const d = max - min;
+
+  if (d !== 0) {
+    s = d / (1 - Math.abs(2*l - 1));
+    switch (max) {
+      case r: h = ((g - b) / d) % 6; break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
   }
-  return Array.from(new Set(found));
+  return { h, s: s*100, l: l*100 };
+}
+
+function hslToRgb({h,s,l}){
+  s /= 100; l /= 100;
+  const c = (1 - Math.abs(2*l - 1)) * s;
+  const x = c * (1 - Math.abs(((h/60) % 2) - 1));
+  const m = l - c/2;
+
+  let r=0,g=0,b=0;
+  if (0 <= h && h < 60) { r=c; g=x; b=0; }
+  else if (60 <= h && h < 120) { r=x; g=c; b=0; }
+  else if (120 <= h && h < 180) { r=0; g=c; b=x; }
+  else if (180 <= h && h < 240) { r=0; g=x; b=c; }
+  else if (240 <= h && h < 300) { r=x; g=0; b=c; }
+  else { r=c; g=0; b=x; }
+
+  return { r:(r+m)*255, g:(g+m)*255, b:(b+m)*255 };
+}
+
+function hueWrap(h){
+  h %= 360;
+  if (h < 0) h += 360;
+  return h;
+}
+// Convert RGB to OK-ish perceptual space (Lab-like via XYZ + Lab)
+function rgbToXyz({r,g,b}) {
+  // sRGB companding
+  const f = (v) => {
+    v /= 255;
+    return v <= 0.04045 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
+  };
+  let R=f(r), G=f(g), B=f(b);
+
+  // D65
+  const X = R*0.4124 + G*0.3576 + B*0.1805;
+  const Y = R*0.2126 + G*0.7152 + B*0.0722;
+  const Z = R*0.0193 + G*0.1192 + B*0.9505;
+  return {X, Y, Z};
+}
+
+function xyzToLab({X,Y,Z}) {
+  // D65 reference white
+  const Xn=0.95047, Yn=1.00000, Zn=1.08883;
+  const f = (t) => t > 0.008856 ? Math.cbrt(t) : (7.787*t + 16/116);
+  const fx=f(X/Xn), fy=f(Y/Yn), fz=f(Z/Zn);
+  const L=116*fy - 16;
+  const a=500*(fx - fy);
+  const b=200*(fy - fz);
+  return {L,a,b};
+}
+
+function deltaE(rgb1, rgb2){
+  const l1 = xyzToLab(rgbToXyz(rgb1));
+  const l2 = xyzToLab(rgbToXyz(rgb2));
+  const dL=l1.L-l2.L, da=l1.a-l2.a, db=l1.b-l2.b;
+  return Math.sqrt(dL*dL + da*da + db*db);
+}
+function extractHexes(text){
+  if (!text) return [];
+  const matches = text.match(/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/g);
+  return matches ? matches.map(m => m.toUpperCase()) : [];
 }
 
 function buildPalette({ vibeText, coatText, maneText }){
-  const profile = vibeProfile(vibeText);
-  const colorsFromInputs = Array.from(new Set([
-    ...parseColorWords(coatText),
-    ...parseColorWords(maneText)
-  ]));
+  // 1) Pull any user-provided hex colors
+  const userHexes = [
+    ...extractHexes(coatText),
+    ...extractHexes(maneText)
+  ].slice(0, 3); // keep up to 3 influences
 
-  let tags = [];
-  if (paletteFromVibe.checked) tags.push(...profile.paletteTags);
-  tags.push(...colorsFromInputs);
+  const userHsl = userHexes
+    .map(h => hexToRgb(h))
+    .filter(Boolean)
+    .map(rgbToHsl);
 
-  // Ensure we have enough tags
-  const fallback = ["gold","lavender","silver","blue","peach"];
-  if (tags.length < 3) tags.push(...fallback);
-
-  // De-dupe, then pick first 5 with variety
-  tags = Array.from(new Set(tags));
-
-  const palette = [];
-  for (const tag of tags) {
-    if (NAMED_COLORS[tag]) palette.push(NAMED_COLORS[tag]);
-    if (palette.length === 5) break;
+  // 2) Choose base hue
+  let baseHue = baseHueFromVibe(vibeText);
+  if (userHsl.length){
+    // average hues on a circle (vector average)
+    const rad = userHsl.map(c => c.h * Math.PI/180);
+    const x = rad.reduce((s,a)=>s+Math.cos(a),0);
+    const y = rad.reduce((s,a)=>s+Math.sin(a),0);
+    baseHue = hueWrap(Math.atan2(y,x) * 180/Math.PI);
   }
-  while (palette.length < 5) palette.push(NAMED_COLORS[rand(fallback)]);
 
-  return palette.slice(0,5);
+  // 3) Set harmony parameters (tight hue spread = cohesion)
+  const hueSpread = userHsl.length ? 22 : 28; // tighter if user provided colors
+  const satBase = userHsl.length ? clamp(userHsl[0].s, 30, 70) : 52;
+  const lightBase = userHsl.length ? clamp(userHsl[0].l, 28, 72) : 50;
+
+  // 4) Generate 5 colors: shadow, base, mid, highlight, accent
+  const candidatesHsl = [];
+
+  // Shadow
+  candidatesHsl.push({ h: hueWrap(baseHue - hueSpread*0.35), s: clamp(satBase*0.75, 22, 60), l: clamp(lightBase*0.45, 16, 42) });
+  // Base
+  candidatesHsl.push({ h: hueWrap(baseHue), s: clamp(satBase, 30, 75), l: clamp(lightBase, 28, 68) });
+  // Mid
+  candidatesHsl.push({ h: hueWrap(baseHue + hueSpread*0.35), s: clamp(satBase*0.9, 28, 72), l: clamp(lightBase*1.05, 32, 76) });
+  // Highlight
+  candidatesHsl.push({ h: hueWrap(baseHue + hueSpread*0.15), s: clamp(satBase*0.55, 18, 55), l: clamp(lightBase*1.45, 70, 92) });
+
+  // Accent: either slight shift OR muted complement depending on vibe
+  const wantEdgy = /alt|punk|emo|goth|baddie|neon/i.test(vibeText || "");
+  const accentHue = wantEdgy ? hueWrap(baseHue + 165) : hueWrap(baseHue + hueSpread*0.9);
+  candidatesHsl.push({
+    h: accentHue,
+    s: wantEdgy ? clamp(satBase*0.85, 28, 78) : clamp(satBase*0.55, 18, 58),
+    l: wantEdgy ? clamp(lightBase*0.85, 22, 58) : clamp(lightBase*0.95, 28, 70)
+  });
+
+  // 5) Convert to hex
+  let palette = candidatesHsl.map(hsl => rgbToHex(hslToRgb(hsl)));
+
+  // 6) Blend in user hexes (replace base/mid/accent slots)
+  // This ensures their provided colors appear, but we keep cohesion via base hue choice above.
+  if (userHexes.length){
+    if (userHexes[0]) palette[1] = userHexes[0]; // base slot
+    if (userHexes[1]) palette[2] = userHexes[1]; // mid slot
+    if (userHexes[2]) palette[4] = userHexes[2]; // accent slot
+  }
+
+  // 7) Enforce cohesion via perceptual distance caps
+  // If any pair is too far apart, gently pull accent hue closer by regenerating it.
+  // Thresholds chosen to avoid “clashing loud” palettes.
+  const MAX_DE = 52; // above this tends to feel discordant
+  const MIN_DE = 6;  // below this feels duplicate
+
+  const rgbPalette = () => palette.map(h => hexToRgb(h)).filter(Boolean);
+
+  function maxDeltaE(){
+    const rgbs = rgbPalette();
+    let max = 0, min = Infinity;
+    for (let i=0;i<rgbs.length;i++){
+      for (let j=i+1;j<rgbs.length;j++){
+        const d = deltaE(rgbs[i], rgbs[j]);
+        max = Math.max(max, d);
+        min = Math.min(min, d);
+      }
+    }
+    return { max, min };
+  }
+
+  // Try a few small adjustments to accent if needed (no heavy loops)
+  for (let tries=0; tries<5; tries++){
+    const { max, min } = maxDeltaE();
+    if (max <= MAX_DE && min >= MIN_DE) break;
+
+    // If too discordant, move accent closer to base and reduce saturation
+    const base = hexToRgb(palette[1]);
+    if (!base) break;
+    const baseHsl = rgbToHsl(base);
+
+    const adjust = candidatesHsl[4];
+    adjust.h = hueWrap(baseHsl.h + (wantEdgy ? 140 : hueSpread*0.7));
+    adjust.s = clamp(adjust.s * 0.85, 16, 65);
+    adjust.l = clamp(adjust.l, 22, 72);
+
+    palette[4] = rgbToHex(hslToRgb(adjust));
+    // If user explicitly provided accent (userHexes[2]), don’t override it.
+    if (userHexes[2]) palette[4] = userHexes[2];
+  }
+
+  return palette; // array of HEX strings
 }
+
 
 /* ---------- NAME + KNOWN FOR + BACKSTORY ---------- */
 
@@ -340,19 +481,19 @@ function safeBackstory({ name, tribe, style, vibeText, g, palette }){
 
 function renderPalette(palette){
   paletteGrid.innerHTML = "";
-  for (const sw of palette){
+  for (const hex of palette){
     const el = document.createElement("div");
     el.className = "swatch";
     el.innerHTML = `
-      <div class="swatchColor" style="background:${sw.hex};"></div>
+      <div class="swatchColor" style="background:${hex};"></div>
       <div class="swatchInfo">
-        <div><strong>${sw.name}</strong></div>
-        <div class="mono">${sw.hex.toUpperCase()}</div>
+        <div class="mono">${hex}</div>
       </div>
     `;
     paletteGrid.appendChild(el);
   }
 }
+
 
 function updateSteps(activeIdx){
   for (let i=1;i<=5;i++){

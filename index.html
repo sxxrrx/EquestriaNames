@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EquestriaNames.com — Official Pony Name Generator</title>
+  <meta name="description" content="Generate elegant, Equestria-core My Little Pony names with magical flair." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="bg-sparkles" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">✦</div>
+      <div class="brand-text">
+        <h1>EquestriaNames</h1>
+        <p class="tagline">The Royal Registry of Pony Names</p>
+      </div>
+    </div>
+    <a class="ghost-link" href="#generator">Generate</a>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="hero-card">
+        <p class="kicker">WELCOME, TRAVELER OF EQUESTRIA</p>
+        <h2>Discover the name written in your destiny.</h2>
+        <p class="sub">
+          Choose a tribe, select a style, and let the Royal Registry reveal a name worthy of song, story, and starlight.
+        </p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#generator">Begin the Ceremony</a>
+          <button id="surpriseBtn" class="btn secondary" type="button">Surprise Me ✨</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="generator" class="panel">
+      <div class="panel-head">
+        <h3>Name Generator</h3>
+        <p>Official Equestria-core vibes. Clean, magical, and readable.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h4>Settings</h4>
+
+          <label class="field">
+            <span>Tribe</span>
+            <select id="tribeSelect">
+              <option value="random">Random</option>
+              <option value="earth">Earth Pony</option>
+              <option value="unicorn">Unicorn</option>
+              <option value="pegasus">Pegasus</option>
+              <option value="alicorn">Alicorn</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Style</span>
+            <select id="styleSelect">
+              <option value="classic">Classic Equestria</option>
+              <option value="royal">Canterlot Royal</option>
+              <option value="nature">Everfree / Nature</option>
+              <option value="magical">Arcane / Starborne</option>
+              <option value="alt">Alt / Music</option>
+            </select>
+          </label>
+
+          <label class="field checkbox">
+            <input id="titleToggle" type="checkbox" />
+            <span>Add a title (optional)</span>
+          </label>
+
+          <div class="row">
+            <button id="generateBtn" class="btn primary" type="button">Generate Name</button>
+            <button id="resetBtn" class="btn secondary" type="button">Reset</button>
+          </div>
+
+          <p class="hint">
+            Tip: “Canterlot Royal” tends toward elegant, two-word names with gold-trim energy.
+          </p>
+        </div>
+
+        <div class="card result">
+          <h4>Registry Result</h4>
+
+          <div id="resultCard" class="result-card" role="status" aria-live="polite">
+            <p class="result-placeholder">Your name will appear here…</p>
+          </div>
+
+          <div class="row">
+            <button id="copyBtn" class="btn tertiary" type="button" disabled>Copy</button>
+            <button id="againBtn" class="btn tertiary" type="button" disabled>Generate Again</button>
+          </div>
+
+          <div class="meta">
+            <div class="pill" id="pillTribe">Tribe: —</div>
+            <div class="pill" id="pillStyle">Style: —</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>
+        Built for fun ✦ EquestriaNames is a fan-made name tool. Not affiliated with Hasbro.
+      </p>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

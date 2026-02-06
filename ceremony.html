@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EquestriaNames — The Ceremony</title>
+  <meta name="description" content="Create a full pony OC with name, palette, talent, and a PG-13 backstory." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Ceremony-specific UI */
+    .stepper { display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
+    .step { padding:8px 10px; border-radius:999px; font-size:12px; border:1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.78); }
+    .step.active { border-color: rgba(243,211,122,0.40); background: rgba(243,211,122,0.10); color: rgba(255,255,255,0.92); }
+
+    .twoCol { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 900px){ .twoCol{ grid-template-columns: 1fr; } }
+
+    .palette {
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    @media (max-width: 560px){
+      .palette{ grid-template-columns: 1fr; }
+    }
+    .swatch{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      overflow:hidden;
+      min-height: 92px;
+      display:flex;
+      flex-direction:column;
+    }
+    .swatchColor{
+      height: 52px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .swatchInfo{
+      padding: 10px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .outputBlock{
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(243,211,122,0.22);
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.05));
+    }
+    .outputTitle{
+      margin: 0 0 6px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.72);
+    }
+    .outputText{ margin:0; color: rgba(255,255,255,0.90); line-height: 1.4; }
+
+    textarea{
+      min-height: 90px;
+      resize: vertical;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(10,14,26,0.5);
+      color: var(--text);
+      outline: none;
+    }
+    textarea::placeholder{ color: rgba(255,255,255,0.45); }
+  </style>
+</head>
+
+<body>
+  <div class="bg-sparkles" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">✦</div>
+      <div class="brand-text">
+        <h1>EquestriaNames</h1>
+        <p class="tagline">The Royal Registry Ceremony</p>
+      </div>
+    </div>
+    <a class="ghost-link" href="index.html">Return</a>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="hero-card">
+        <p class="kicker">THE ROYAL REGISTRY OPENS</p>
+        <h2>The Ceremony of Creation</h2>
+        <p class="sub">
+          Provide as much (or as little) as you like. Your pony will be sealed with an official name, a color palette,
+          a “Known for…” talent, and an optional PG-13 backstory.
+        </p>
+        <div class="stepper" aria-hidden="true">
+          <div class="step active" id="stepPill1">1 • Vibe</div>
+          <div class="step" id="stepPill2">2 • Identity</div>
+          <div class="step" id="stepPill3">3 • Look</div>
+          <div class="step" id="stepPill4">4 • Depth</div>
+          <div class="step" id="stepPill5">5 • Seal</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="ceremonyPanel">
+      <div class="panel-head">
+        <h3>Registry Inputs</h3>
+        <p>All optional — the registry can fill in missing details.</p>
+      </div>
+
+      <div class="twoCol">
+        <div class="card">
+          <h4>1) Vibe (optional)</h4>
+          <label class="field">
+            <span>Describe your pony’s vibe</span>
+            <textarea id="vibeInput" placeholder="Examples: alt music baddie • soft winter librarian • chaotic sunshine • celestial goth witch"></textarea>
+          </label>
+
+          <div class="row">
+            <button class="btn secondary" id="vibeExampleBtn" type="button">Use “alt music baddie”</button>
+            <button class="btn tertiary" id="clearVibeBtn" type="button">Clear</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4>2) Identity</h4>
+          <label class="field">
+            <span>Tribe</span>
+            <select id="tribeSelect">
+              <option value="random">Random</option>
+              <option value="earth">Earth Pony</option>
+              <option value="unicorn">Unicorn</option>
+              <option value="pegasus">Pegasus</option>
+              <option value="alicorn">Alicorn</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Gender</span>
+            <select id="genderSelect">
+              <option value="unspecified">Prefer not to say</option>
+              <option value="stallion">Stallion</option>
+              <option value="mare">Mare</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Style</span>
+            <select id="styleSelect">
+              <option value="classic">Classic Equestria</option>
+              <option value="royal">Canterlot Royal</option>
+              <option value="nature">Everfree / Nature</option>
+              <option value="magical">Arcane / Starborne</option>
+              <option value="alt">Alt / Music</option>
+            </select>
+          </label>
+
+          <label class="field checkbox">
+            <input id="titleToggle" type="checkbox" />
+            <span>Add a title (optional)</span>
+          </label>
+        </div>
+
+        <div class="card">
+          <h4>3) Look (optional)</h4>
+          <label class="field">
+            <span>Coat color</span>
+            <input id="coatColor" type="text" placeholder="e.g., peach, gray, black, lavender" />
+          </label>
+
+          <label class="field">
+            <span>Mane color(s)</span>
+            <input id="maneColors" type="text" placeholder="e.g., deep orange and pink" />
+          </label>
+
+          <label class="field checkbox">
+            <input id="paletteFromVibe" type="checkbox" checked />
+            <span>Suggest palette from vibe (recommended)</span>
+          </label>
+
+          <p class="hint">If you type colors above, the registry will blend them into the palette.</p>
+        </div>
+
+        <div class="card">
+          <h4>4) Depth</h4>
+
+          <label class="field checkbox">
+            <input id="knownForToggle" type="checkbox" checked />
+            <span>Include “Known for…”</span>
+          </label>
+
+          <label class="field checkbox">
+            <input id="backstoryToggle" type="checkbox" checked />
+            <span>Include PG-13 backstory (no cussing, no sexual content)</span>
+          </label>
+
+          <label class="field">
+            <span>Backstory length</span>
+            <select id="backstoryLength">
+              <option value="short">Short</option>
+              <option value="medium" selected>Medium</option>
+              <option value="long">Long</option>
+            </select>
+          </label>
+
+          <div class="row">
+            <button class="btn tertiary" id="resetBtn" type="button">Reset</button>
+            <button class="btn secondary" id="surpriseBtn" type="button">Surprise Me ✨</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px;">
+        <button class="btn primary" id="sealBtn" type="button">Seal My Registry</button>
+        <button class="btn tertiary" id="copyAllBtn" type="button" disabled>Copy All</button>
+      </div>
+
+      <div class="outputBlock" id="outputBlock" style="display:none;">
+        <p class="outputTitle">Registry Result</p>
+        <p class="result-name" id="outName" style="margin:0;"></p>
+        <p class="result-sub" id="outMeta" style="margin:8px 0 0;"></p>
+
+        <div class="palette" id="paletteGrid"></div>
+
+        <div class="known-for" id="outKnownFor" style="display:none;"></div>
+
+        <div class="outputBlock" id="outBackstoryWrap" style="margin-top:12px; display:none;">
+          <p class="outputTitle">PG-13 Backstory</p>
+          <p class="outputText" id="outBackstory"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="ceremony.js"></script>
+</body>
+</html>
